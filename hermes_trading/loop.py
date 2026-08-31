@@ -389,6 +389,7 @@ async def run_cycle(
     closed_trade: dict[str, Any] | None = None
     opened_position: dict[str, Any] | None = None
     decision: dict[str, Any] = {"enter": False, "signals": {}}
+    arb_decision: dict[str, Any] = {"enter": False, "signals": {}, "spatial_opportunities": [], "triangular_opportunities": []}
 
     if isinstance(position, Mapping):
         stop = float(position["stop_loss"])
