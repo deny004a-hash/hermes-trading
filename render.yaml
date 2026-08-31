@@ -1,0 +1,25 @@
+---
+service:
+  name: hermes-trading
+  env: docker
+  plan: free
+  region: oregon
+  dockerfilePath: ./Dockerfile
+  healthCheckPath: /
+  envVars:
+    - key: HERMES_TRADING_MODE
+      value: paper
+    - key: HERMES_TRADING_I_ACCEPT_RISK
+      value: "false"
+    - key: HERMES_STATE_DIR
+      value: /app/state
+    - key: HERMES_STATE_SEED_DIR
+      value: /app/state_seed
+    - key: PORT
+      value: 10000
+    - key: OPENAI_API_KEY
+      sync: false
+    - key: OPENAI_BASE_URL
+      value: https://integrate.api.nvidia.com/v1
+    - key: NVIDIA_API_KEY
+      sync: false

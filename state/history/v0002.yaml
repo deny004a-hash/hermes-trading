@@ -1,0 +1,12 @@
+version: '02'
+entry:
+  indicator: rsi
+  threshold: 32
+  direction: long
+stop_loss_pct: 2.0
+position_size_r: 0.5
+risk_reward: 2.0
+market_type: spot
+signals:
+  smart_money_concepts: true
+  price_action: true

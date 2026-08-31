@@ -1,0 +1,28 @@
+# Secrets / runtime
+.env
+.env.*
+!.env.example
+nul
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtualenvs
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs / runtime state
+*.log
+*.tmp
+state/*.tmp

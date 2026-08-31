@@ -1,0 +1,25 @@
+version: '06'
+entry:
+  indicator: none
+  threshold: 0
+  direction: long
+stop_loss_pct: 2.5
+position_size_r: 1.0
+risk_reward: 2.5
+market_type: spot
+signals:
+  smart_money_concepts: true
+  price_action: true
+  smc_profile: institutional_full
+  require_full_smc_setup: false
+  require_bullish_price_action: false
+  btc_master_gate: true
+  min_smc_confluence: 2
+  components:
+    confirmed_swing_structure: true
+    bos_choch: true
+    sell_side_liquidity_sweep: true
+    order_block_mitigation: true
+    fair_value_gap_mitigation: true
+    premium_discount_dealing_range: true
+    multi_timeframe_bias_1h_4h_1d: true

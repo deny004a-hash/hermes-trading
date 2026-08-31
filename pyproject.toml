@@ -1,0 +1,34 @@
+[project]
+name = "hermes-trading"
+version = "0.1.0"
+description = "Binance Global spot paper-trading worker with one-variable reflection"
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "ccxt>=4.5.76",
+    "httpx>=0.28.1",
+    "numpy>=2.4.6",
+    "pandas>=3.0.5",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+    "yfinance>=1.7.0",
+]
+
+[project.scripts]
+hermes-trading = "hermes_trading.run:main"
+hermes-trading-reflect = "hermes_trading.reflect:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hermes_trading*"]
+exclude = ["tests*", "src*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]

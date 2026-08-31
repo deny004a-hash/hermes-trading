@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-08-30T12:55:54.743407+00:00",
+  "status": "ok",
+  "asset": "1INCH/USDT",
+  "exchange": "binance",
+  "exchange_region": "global",
+  "market_type": "spot",
+  "mode": "paper",
+  "strategy_version": "06",
+  "equity": 10.006265174259235,
+  "last_price": 0.0894,
+  "open_position": false,
+  "closed_trades": 1,
+  "decision": {
+    "enter": false,
+    "signals": {
+      "bullish_price_action": false,
+      "bullish_engulfing": false,
+      "bullish_rejection": false,
+      "smc_long_setup": false,
+      "market_structure": "bullish",
+      "bos_bullish": false,
+      "choch_bullish": false,
+      "liquidity_sweep": false,
+      "order_block_mitigated": false,
+      "fvg_mitigated": true,
+      "in_discount_zone": true,
+      "mtf_bias": "bullish",
+      "bias_1h": "bullish",
+      "bias_4h": "bullish",
+      "bias_1d": "bullish",
+      "btc_trend_3m": "bullish",
+      "btc_gate_ok": true,
+      "entry_tf_trend": true,
+      "smc_confluence_count": 3,
+      "confluence_count": 3
+    }
+  },
+  "adapter_sources": {
+    "price": "binance",
+    "onchain": "defillama",
+    "news": "google_news_rss",
+    "macro": "coingecko"
+  },
+  "scanned_assets": 246,
+  "eligible_assets": [],
+  "selected_asset": "1INCH/USDT",
+  "max_concurrent_positions": 1
+}
