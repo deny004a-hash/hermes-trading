@@ -450,6 +450,7 @@ async def run_cycle(
         "open_position": paper.get("position") is not None,
         "closed_trades": int(paper.get("closed_trades", 0)),
         "decision": decision,
+        "arb_decision": arb_decision,
         "adapter_sources": {
             name: str(payload.get("source", "unknown"))
             for name, payload in data.items()
@@ -598,8 +599,53 @@ async def run_watchlist_cycle(
             entry_candles, strategy, htf_candles=htf_candles, btc_trend_3m=btc_gate
         )
 
+    # === PARALLEL ARBITRAJ SCAN (live paper-trading) ===
+    arb_decision: dict[str, Any] = {"enter": False, "signals": {}, "spatial_opportunities": [], "triangular_opportunities": []}
+    try:
+        from .adapters.cross_exchange import fetch_cross_exchange_prices, find_spatial_arbitrage, find_triangular_arbitrage
+        arb_book = await fetch_cross_exchange_prices()
+        spatial_opps = find_spatial_arbitrage(arb_book, min_spread_pct=0.3, notional_usdt=100)
+        triangular_opps = find_triangular_arbitrage(arb_book, min_net_pct=0.3, notional_usdt=100)
+        arb_decision = {
+            "enter": len(spatial_opps) > 0 or len(triangular_opps) > 0,
+            "signals": {
+                "arb_spatial_opps": len(spatial_opps),
+                "best_spatial_spread": spatial_opps[0]["spread_pct"] if spatial_opps else 0,
+                "best_spatial_net": spatial_opps[0]["net_pct"] if spatial_opps else 0,
+                "arb_triangular_opps": len(triangular_opps),
+                "best_triangular_net": triangular_opps[0]["net_pct"] if triangular_opps else 0,
+            },
+            "spatial_opportunities": spatial_opps,
+            "triangular_opportunities": triangular_opps,
+        }
+    except Exception:
+        pass
     paper = _paper_state(state, goal)
     position = paper.get("position")
+    
+    # === PARALLEL ARBITRAJ SCAN (live paper-trading) ===
+    arb_decision: dict[str, Any] = {"enter": False, "signals": {}, "opportunities": 0}
+    try:
+        from .adapters.cross_exchange import fetch_cross_exchange_prices, find_spatial_arbitrage, find_triangular_arbitrage
+        # Note: this is called inside async function; await properly
+        arb_book = await fetch_cross_exchange_prices()
+        spatial_opps = find_spatial_arbitrage(arb_book, min_spread_pct=0.3, notional_usdt=100)
+        triangular_opps = find_triangular_arbitrage(arb_book, min_net_pct=0.3, notional_usdt=100)
+        arb_decision = {
+            "enter": len(spatial_opps) > 0 or len(triangular_opps) > 0,
+            "signals": {
+                "arb_spatial_opps": len(spatial_opps),
+                "best_spatial_spread": spatial_opps[0]["spread_pct"] if spatial_opps else 0,
+                "best_spatial_net": spatial_opps[0]["net_pct"] if spatial_opps else 0,
+                "arb_triangular_opps": len(triangular_opps),
+                "best_triangular_net": triangular_opps[0]["net_pct"] if triangular_opps else 0,
+            },
+            "spatial_opportunities": spatial_opps,
+            "triangular_opportunities": triangular_opps,
+        }
+    except Exception:
+        pass  # Arb non-fatal in this cycle
+    
     delisted_trade: dict[str, Any] | None = None
     if isinstance(position, Mapping):
         selected_asset = str(position["asset"])

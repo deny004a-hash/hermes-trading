@@ -183,3 +183,104 @@ def find_spatial_arbitrage(
 
     opportunities.sort(key=lambda o: o["net_pct"], reverse=True)
     return opportunities
+
+
+# === TRIANGULAR ARBITRAGE (same-exchange, 3-pair cycle) ===
+
+# 22 halal coin + USDC as bridge (USDT/USDC pair, stable-to-stable spreads are usually tiny)
+HALAL_22 = {
+    "ADA", "ALGO", "ARB", "AVAX", "BCH", "BTC", "DOT", "ETH", "FIL",
+    "HBAR", "ICP", "LINK", "LTC", "NEAR", "POL", "QNT", "RENDER", "SOL",
+    "SUI", "TRX", "XLM", "XRP",
+}
+
+# Triangular cycle structure: A -> B -> C -> A using [Coin/USDT, Coin/BTC, BTC/USDT] book.
+# A cycle is profitable when:
+#   qty * (A/B) * (B/C) * (C/A) > 1 + fees
+# But each leg is a trade. A cleaner approach: for each coin X, build a triangular
+# cycle X/USDT -> X/BTC -> BTC/USDT -> X/USDT.
+#   leg1: sell X/USDT (get USDT)
+#   leg2: buy BTC/USDT (spend USDT)
+#   leg3: sell X/BTC (get BTC)  -- if X/BTC exists
+# Net: USDT -> BTC -> (X/BTC) -> X -> USDT
+
+def find_triangular_arbitrage(
+    book: Mapping[str, Any],
+    *,
+    min_net_pct: float = 0.3,
+    notional_usdt: float = 100.0,
+) -> list[dict[str, Any]]:
+    """Find triangular arb opportunities on a single exchange.
+
+    For each exchange with sufficient book depth:
+      - For each halal coin in HALAL_22 that has pairs vs USDT and vs BTC,
+        build cycle: USDT -> BTC -> coin -> USDT
+          leg1: buy BTC/USDT with USDT   (rate btc_usdt)
+          leg2: buy coin/BTC with BTC    (rate coin_btc)
+          leg3: sell coin/USDT for USDT  (rate coin_usdt)
+        net = btc_usdt * coin_btc * coin_usdt  (per 1 USDT input)
+
+    Also reverse: USDT -> coin -> BTC -> USDT
+      leg1: buy coin/USDT
+      leg2: sell coin/BTC for BTC
+      leg3: sell BTC/USDT for USDT
+
+    Net profit only if net > 1 + 3*taker_fee.
+    """
+    if not isinstance(book, Mapping):
+        raise SchemaError("price book must be a mapping")
+    if book.get("schema_version") != SCHEMA_VERSION:
+        raise SchemaError("schema_version mismatch")
+    prices = book.get("prices", {})
+
+    opportunities = []
+    for ex, ex_prices in prices.items():
+        if not ex_prices:
+            continue
+        fee = TAKER_FEE.get(ex, 0.001) * 3  # 3 legs
+        btc_usdt = ex_prices.get("BTCUSDT")
+        if not btc_usdt or btc_usdt <= 0:
+            continue
+
+        for coin in HALAL_22:
+            sym_usdt = f"{coin}USDT"
+            sym_btc = f"{coin}BTC"
+            coin_usdt = ex_prices.get(sym_usdt)
+            coin_btc = ex_prices.get(sym_btc)
+            if not coin_usdt or not coin_btc or coin_usdt <= 0 or coin_btc <= 0:
+                continue
+
+            # Cycle 1: USDT -> BTC -> coin -> USDT
+            # 1 USDT -> 1/btc_usdt BTC -> (1/btc_usdt)/coin_btc coin
+            #        -> ((1/btc_usdt)/coin_btc) * coin_usdt USDT
+            c1 = (1.0 / btc_usdt) / coin_btc * coin_usdt
+
+            # Cycle 2: USDT -> coin -> BTC -> USDT
+            # 1 USDT -> 1/coin_usdt coin -> (1/coin_usdt)*coin_btc BTC
+            #        -> ((1/coin_usdt)*coin_btc) * btc_usdt USDT
+            c2 = (1.0 / coin_usdt) * coin_btc * btc_usdt
+
+            # Best cycle
+            for cycle, label in [(c1, "usdt->btc->coin->usdt"), (c2, "usdt->coin->btc->usdt")]:
+                gross_pct = (cycle - 1.0) * 100.0
+                net_pct = gross_pct - fee * 100
+                if net_pct < min_net_pct:
+                    continue
+                net_profit = notional_usdt * (net_pct / 100.0)
+                opportunities.append({
+                    "kind": "triangular",
+                    "exchange": ex,
+                    "coin": coin,
+                    "cycle": label,
+                    "btc_usdt": btc_usdt,
+                    "coin_usdt": coin_usdt,
+                    "coin_btc": coin_btc,
+                    "gross_pct": round(gross_pct, 4),
+                    "fees_pct": round(fee * 100, 4),
+                    "net_pct": round(net_pct, 4),
+                    "notional_usdt": notional_usdt,
+                    "net_profit_usdt": round(net_profit, 4),
+                })
+
+    opportunities.sort(key=lambda o: o["net_pct"], reverse=True)
+    return opportunities
