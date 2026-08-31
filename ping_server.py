@@ -1,19 +1,13 @@
-"""Minimal health-check / ping server for Render (so the free tier stays awake)."""
+"""Health / ping server — Railway / Render uyumluluk."""
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
-
 PORT = int(os.environ.get("PORT", 10000))
-
-class Handler(BaseHTTPRequestHandler):
+class H(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Type","text/plain")
         self.end_headers()
-        self.wfile.write(b"Bot is running\n")
-    def log_message(self, fmt, *args):  # suppress logs
-        pass
-
-if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"Health server running on port {PORT}")
-    server.serve_forever()
+        self.wfile.write(b"Railway-paper-mode OK\n")
+    def log_message(self,*a): pass
+if __name__=="__main__":
+    HTTPServer(("0.0.0.0",PORT),H).serve_forever()
