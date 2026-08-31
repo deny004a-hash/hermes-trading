@@ -868,13 +868,11 @@ async def run_loop(
     arb_task = asyncio.create_task(
         run_arb_only_loop(state_dir=state, interval_seconds=arb_interval_seconds)
     )
-    # Telegram bridge: only runs if TELEGRAM_BOT_TOKEN is set
+    # Telegram bridge: async polling, runs in same event loop
     telegram_task: asyncio.Task | None = None
     if os.getenv("TELEGRAM_BOT_TOKEN"):
-        from .telegram_bridge import main as telegram_main
-        telegram_task = asyncio.create_task(
-            asyncio.to_thread(telegram_main)
-        )
+        from .telegram_bridge import poll_loop as telegram_poll_loop
+        telegram_task = asyncio.create_task(telegram_poll_loop())
     trading_task = asyncio.create_task(trading_loop())
     try:
         await asyncio.gather(trading_task, arb_task, *( [telegram_task] if telegram_task else [] ))
