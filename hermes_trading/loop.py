@@ -731,14 +731,97 @@ async def run_watchlist_cycle(
     return result
 
 
+async def run_arb_only_loop(
+    *,
+    state_dir: str | Path,
+    interval_seconds: float = 4.0,
+    notional_usdt: float = 100.0,
+) -> None:
+    """Fast arb-only scan loop (every 4s by default) for live paper-trading.
+
+    Runs IN PARALLEL with the trading loop. Each tick:
+      - fetches all exchange tickers (parallel)
+      - finds spatial + triangular opportunities
+      - logs only opportunities with net > 0
+      - writes a separate arb_heartbeat.json
+    """
+    from .adapters.cross_exchange import (
+        fetch_cross_exchange_prices,
+        find_spatial_arbitrage,
+        find_triangular_arbitrage,
+    )
+    state = Path(state_dir)
+    print(
+        json.dumps(
+            {
+                "event": "arb_boot",
+                "message": "Starting fast arbitrage loop",
+                "interval_seconds": interval_seconds,
+                "notional_usdt": notional_usdt,
+            }
+        ),
+        flush=True,
+    )
+    while True:
+        started = asyncio.get_running_loop().time()
+        try:
+            book = await fetch_cross_exchange_prices()
+            spatial = find_spatial_arbitrage(book, min_spread_pct=0.3, notional_usdt=notional_usdt)
+            triangular = find_triangular_arbitrage(book, min_net_pct=0.3, notional_usdt=notional_usdt)
+            payload = {
+                "schema_version": 1,
+                "timestamp": utc_now(),
+                "event": "arb_scan",
+                "spatial_count": len(spatial),
+                "triangular_count": len(triangular),
+                "best_spatial_net": spatial[0]["net_pct"] if spatial else 0,
+                "best_triangular_net": triangular[0]["net_pct"] if triangular else 0,
+                "spatial": spatial[:3],
+                "triangular": triangular[:3],
+            }
+            _write_json_atomic(state / "arb_heartbeat.json", payload)
+            if spatial or triangular:
+                print(
+                    json.dumps(
+                        {
+                            "event": "arb_opportunities",
+                            "spatial": len(spatial),
+                            "triangular": len(triangular),
+                            "best_spatial_net": payload["best_spatial_net"],
+                            "best_triangular_net": payload["best_triangular_net"],
+                        }
+                    ),
+                    flush=True,
+                )
+        except Exception as exc:
+            print(
+                json.dumps(
+                    {
+                        "event": "arb_error",
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                    }
+                ),
+                flush=True,
+            )
+        elapsed = asyncio.get_running_loop().time() - started
+        await asyncio.sleep(max(0.0, interval_seconds - elapsed))
+
+
 async def run_loop(
     *,
     assets: list[str],
     state_dir: str | Path,
     interval_seconds: float = 60.0,
     once: bool = False,
+    arb_interval_seconds: float = 4.0,
 ) -> None:
-    """Run forever, halting only on schema drift or an opened circuit."""
+    """Run forever, halting only on schema drift or an opened circuit.
+
+    Spawns two parallel tasks:
+      - run_watchlist_cycle every interval_seconds (trading; default 60s)
+      - run_arb_only_loop every arb_interval_seconds (arb; default 4s)
+    """
     if interval_seconds <= 0:
         raise ValueError("interval_seconds must be positive")
     if not assets:
@@ -759,56 +842,38 @@ async def run_loop(
         flush=True,
     )
 
-    while True:
-        started = asyncio.get_running_loop().time()
-        try:
-            result = await run_watchlist_cycle(
-                assets=assets, state_dir=state, breaker=breaker
-            )
-            print(json.dumps({"event": "cycle", **result["heartbeat"]}), flush=True)
-            if result["opened_position"] is not None:
-                print(
-                    json.dumps(
-                        {"event": "paper_position_opened", **result["opened_position"]}
-                    ),
-                    flush=True,
+    async def trading_loop() -> None:
+        """Watchlist trading scan every interval_seconds."""
+        breaker = CircuitBreaker(threshold=5)
+        while True:
+            started = asyncio.get_running_loop().time()
+            try:
+                result = await run_watchlist_cycle(
+                    assets=assets, state_dir=state, breaker=breaker
                 )
-            if result["closed_trade"] is not None:
-                print(
-                    json.dumps(
-                        {"event": "paper_trade_closed", **result["closed_trade"]}
-                    ),
-                    flush=True,
-                )
-        except (SchemaError, CircuitOpenError) as exc:
-            heartbeat = {
-                "schema_version": 1,
-                "timestamp": utc_now(),
-                "status": "fatal",
-                "primary_asset": assets[0],
-                "watchlist_size": len(assets),
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-            }
-            _write_json_atomic(state / "heartbeat.json", heartbeat)
-            print(json.dumps({"event": "fatal", **heartbeat}), flush=True)
-            raise
-        except Exception as exc:
-            heartbeat = {
-                "schema_version": 1,
-                "timestamp": utc_now(),
-                "status": "degraded",
-                "primary_asset": assets[0],
-                "watchlist_size": len(assets),
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-            }
-            _write_json_atomic(state / "heartbeat.json", heartbeat)
-            print(json.dumps({"event": "cycle_error", **heartbeat}), flush=True)
-            if once:
+                print(json.dumps({"event": "cycle", **result["heartbeat"]}), flush=True)
+                if result["opened_position"] is not None:
+                    print(json.dumps({"event": "paper_position_opened", **result["opened_position"]}), flush=True)
+                if result["closed_trade"] is not None:
+                    print(json.dumps({"event": "paper_trade_closed", **result["closed_trade"]}), flush=True)
+            except (SchemaError, CircuitOpenError) as exc:
+                print(json.dumps({"event": "fatal", "error_type": type(exc).__name__, "error": str(exc)}), flush=True)
                 raise
+            except Exception as exc:
+                print(json.dumps({"event": "cycle_error", "error_type": type(exc).__name__, "error": str(exc)}), flush=True)
+            elapsed = asyncio.get_running_loop().time() - started
+            await asyncio.sleep(max(0.0, interval_seconds - elapsed))
 
-        if once:
-            return
-        elapsed = asyncio.get_running_loop().time() - started
-        await asyncio.sleep(max(0.0, interval_seconds - elapsed))
+    arb_task = asyncio.create_task(
+        run_arb_only_loop(state_dir=state, interval_seconds=arb_interval_seconds)
+    )
+    trading_task = asyncio.create_task(trading_loop())
+    try:
+        await asyncio.gather(trading_task, arb_task)
+    except (SchemaError, CircuitOpenError):
+        arb_task.cancel()
+        raise
+    except asyncio.CancelledError:
+        arb_task.cancel()
+        trading_task.cancel()
+        raise
