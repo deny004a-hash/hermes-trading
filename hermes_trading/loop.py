@@ -868,9 +868,16 @@ async def run_loop(
     arb_task = asyncio.create_task(
         run_arb_only_loop(state_dir=state, interval_seconds=arb_interval_seconds)
     )
+    # Telegram bridge: only runs if TELEGRAM_BOT_TOKEN is set
+    telegram_task: asyncio.Task | None = None
+    if os.getenv("TELEGRAM_BOT_TOKEN"):
+        from .telegram_bridge import main as telegram_main
+        telegram_task = asyncio.create_task(
+            asyncio.to_thread(telegram_main)
+        )
     trading_task = asyncio.create_task(trading_loop())
     try:
-        await asyncio.gather(trading_task, arb_task)
+        await asyncio.gather(trading_task, arb_task, *( [telegram_task] if telegram_task else [] ))
     except (SchemaError, CircuitOpenError):
         arb_task.cancel()
         raise
