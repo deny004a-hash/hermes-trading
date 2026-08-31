@@ -26,3 +26,6 @@ venv/
 *.log
 *.tmp
 state/*.tmp
+
+# SSH keys (accidentally added)
+.ssh/
