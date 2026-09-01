@@ -38,14 +38,45 @@ def handle_command(text: str) -> str:
             "/help — Bu mesaj"
         )
     if lower == "/status":
+        # Trading position (paper_state)
+        trade_text = "📊 *Trading (Paper):*\n"
+        try:
+            for p in ["/app/state/paper_state.json", "./state/paper_state.json", "state/paper_state.json"]:
+                if os.path.exists(p):
+                    with open(p) as f:
+                        paper = json.load(f)
+                    pos = paper.get("position")
+                    equity = paper.get("equity", 0)
+                    trade_text += f"• Equity: `{equity:.4f}` USDT\n"
+                    trade_text += f"• Pozisyon: `{'AÇIK ' + pos['asset'] + ' @ ' + str(pos.get('entry_price')) if pos else 'YOK'}`\n"
+                    trade_text += f"• Kapalı trades: `{paper.get('closed_trades', 0)}`\n"
+                    break
+        except Exception as exc:
+            trade_text += f"• Okuma hatası: {exc}\n"
+        # Arbitraj status (arb_heartbeat)
+        arb_text = "\n🔄 *Arbitraj:*\n"
+        try:
+            for p in ["/app/state/arb_heartbeat.json", "./state/arb_heartbeat.json", "state/arb_heartbeat.json"]:
+                if os.path.exists(p):
+                    with open(p) as f:
+                        arb = json.load(f)
+                    arb_text += f"• Son tarama: `{arb.get('timestamp', '?')}`\n"
+                    arb_text += f"• Spatial fırsat: `{arb.get('spatial_count', 0)}`\n"
+                    arb_text += f"• Triangular fırsat: `{arb.get('triangular_count', 0)}`\n"
+                    arb_text += f"• En iyi net: `%{arb.get('best_spatial_net', 0):.2f}` (spatial) | `%{arb.get('best_triangular_net', 0):.2f}` (triang)\n"
+                    break
+            else:
+                arb_text += "• Henüz tarama yok (4sn'de başlar)\n"
+        except Exception as exc:
+            arb_text += f"• Okuma hatası: {exc}\n"
         return (
-            "✅ *Hermes v08 çalışıyor*\n"
-            "• Trading: her 60s\n"
-            "• Arbitraj (spatial): her 4s\n"
-            "• Arbitraj (triangular): her 4s\n"
-            "• Coin: 22 halal\n"
-            "• Borsalar: Binance, Bybit, OKX, KuCoin\n"
-            "• Mod: paper"
+            f"🤖 *Hermes v08 — /status*\n\n"
+            f"{trade_text}\n{arb_text}\n"
+            f"• Döngü: Trading 60s / Arbitraj 4s\n"
+            f"• Watchlist: 22 helal coin\n"
+            f"• Borsa: Binance + Bybit + OKX + KuCoin\n"
+            f"• Mod: paper (live)\n"
+            f"• Strateji: v08 (min_smc=0, SL 1%, R/R 2.0)"
         )
     if lower == "/arb":
         try:
