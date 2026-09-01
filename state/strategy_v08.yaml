@@ -12,7 +12,7 @@ signals:
   price_action: true
   smc_profile: institutional_full
   require_full_smc_setup: false
-  require_bullish_price_action: false
+  require_bullish_price_action: true
   btc_master_gate: false
   btc_gate_pullback_tolerance: false
   min_smc_confluence: 0

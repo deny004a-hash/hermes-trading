@@ -156,12 +156,19 @@ def evaluate_entry(
         float(current["close"]) > float(current["open"])
         and lower_wick >= max(body * 1.5, 1e-12)
     )
-    bullish_price_action = bullish_engulfing or bullish_rejection
+    bullish_price_action = (
+        bullish_engulfing
+        or bullish_rejection
+        or bullish_rejection_2h > 0
+        or not strategy.get("signals", {}).get("require_bullish_price_action", False)
+    )
     smc = analyze_smc(candles, htf_candles)
     # threshold variable kept for compatibility but unused; RSI threshold removed
     threshold = float(entry.get("threshold", 0))
 
-    btc_gate_ok = btc_trend_3m != "bearish"
+    # BTC master gate: only if strategy requires it (v08_final allows off)
+    btc_gate_required = strategy.get("signals", {}).get("btc_master_gate", True)
+    btc_gate_ok = (not btc_gate_required) or (btc_trend_3m != "bearish")
     entry_tf_trend = smc["mtf_bias"] != "bearish"
     signals = {
         # "rsi": float(rsi),  # removed

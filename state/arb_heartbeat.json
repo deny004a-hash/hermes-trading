@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-09-01T16:40:26.479493+00:00",
+  "event": "arb_scan",
+  "spatial_count": 36,
+  "triangular_count": 0,
+  "best_spatial_net": 21183.8409,
+  "best_triangular_net": 0,
+  "spatial": [
+    {
+      "symbol": "DATAUSDT",
+      "buy_exchange": "binance",
+      "buy_price": 0.00088,
+      "sell_exchange": "bybit",
+      "sell_price": 0.1873,
+      "spread_pct": 21184.0909,
+      "fees_pct": 0.25,
+      "net_pct": 21183.8409,
+      "notional_usdt": 100.0,
+      "net_profit_usdt": 21183.8409,
+      "all_quotes": {
+        "binance": 0.00088,
+        "bybit": 0.1873
+      }
+    },
+    {
+      "symbol": "BEAMUSDT",
+      "buy_exchange": "bybit",
+      "buy_price": 0.001503,
+      "sell_exchange": "binance",
+      "sell_price": 0.0652,
+      "spread_pct": 4237.9907,
+      "fees_pct": 0.25,
+      "net_pct": 4237.7407,
+      "notional_usdt": 100.0,
+      "net_profit_usdt": 4237.7407,
+      "all_quotes": {
+        "binance": 0.0652,
+        "bybit": 0.001503
+      }
+    },
+    {
+      "symbol": "HNTUSDT",
+      "buy_exchange": "bybit",
+      "buy_price": 0.6358,
+      "sell_exchange": "binance",
+      "sell_price": 4.67,
+      "spread_pct": 634.5077,
+      "fees_pct": 0.25,
+      "net_pct": 634.2577,
+      "notional_usdt": 100.0,
+      "net_profit_usdt": 634.2577,
+      "all_quotes": {
+        "binance": 4.67,
+        "bybit": 0.6358
+      }
+    }
+  ],
+  "triangular": []
+}

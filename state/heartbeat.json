@@ -1,9 +1,56 @@
 {
   "schema_version": 1,
-  "timestamp": "2026-08-31T15:54:32.322828+00:00",
-  "status": "degraded",
-  "primary_asset": "ADA/USDT",
-  "watchlist_size": 22,
-  "error_type": "NameError",
-  "error": "name 'arb_decision' is not defined"
+  "timestamp": "2026-09-01T16:40:17.953270+00:00",
+  "status": "ok",
+  "asset": "ADA/USDT",
+  "exchange": "binance",
+  "exchange_region": "global",
+  "market_type": "spot",
+  "mode": "paper",
+  "strategy_version": "08_final",
+  "equity": 10.006265174259235,
+  "last_price": 0.1969,
+  "open_position": false,
+  "closed_trades": 1,
+  "decision": {
+    "enter": false,
+    "signals": {
+      "bullish_price_action": false,
+      "bullish_engulfing": false,
+      "bullish_rejection": false,
+      "smc_long_setup": false,
+      "market_structure": "neutral",
+      "bos_bullish": false,
+      "choch_bullish": false,
+      "liquidity_sweep": false,
+      "order_block_mitigated": false,
+      "fvg_mitigated": false,
+      "in_discount_zone": true,
+      "mtf_bias": "neutral",
+      "bias_1h": "bearish",
+      "bias_4h": "bullish",
+      "bias_1d": "neutral",
+      "btc_trend_3m": "bearish",
+      "btc_gate_ok": true,
+      "entry_tf_trend": true,
+      "smc_confluence_count": 1,
+      "confluence_count": 1
+    }
+  },
+  "arb_decision": {
+    "enter": false,
+    "signals": {},
+    "spatial_opportunities": [],
+    "triangular_opportunities": []
+  },
+  "adapter_sources": {
+    "price": "binance",
+    "onchain": "defillama",
+    "news": "google_news_rss",
+    "macro": "coingecko"
+  },
+  "scanned_assets": 22,
+  "eligible_assets": [],
+  "selected_asset": "ADA/USDT",
+  "max_concurrent_positions": 1
 }
