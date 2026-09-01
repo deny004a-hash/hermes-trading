@@ -1,37 +1,6 @@
-version: '07'
+version: '08'
 entry:
   indicator: none
-  threshold: 0
-  direction: long
-stop_loss_pct: 1.5
-position_size_r: 1.0
-risk_reward: 3.0
-market_type: spot
-signals:
-  smart_money_concepts: true
-  price_action: true
-  smc_profile: institutional_full
-  require_full_smc_setup: false
-  require_bullish_price_action: false
-  btc_master_gate: true
-  btc_gate_pullback_tolerance: true
-  min_smc_confluence: 1
-  components:
-    confirmed_swing_structure: true
-    bos_choch: true
-    sell_side_liquidity_sweep: true
-    order_block_mitigation: true
-    fair_value_gap_mitigation: true
-    premium_discount_dealing_range: true
-    multi_timeframe_bias_1h_4h_1d: true
-  adaptive_relaxation:
-    enabled: true
-    cycles_without_trade_threshold: 3
-    relaxation_steps:
-      - min_smc_confluence: 0
-      - require_btc_gate: false
-    cooldown_after_trade_cycles: 5
-    target_daily_trades: 10
-    per_trade_min_target_pct: 0.1
-    daily_target_pct: 1.0
-notes: v07 — pragmatic SMC+PA, min_confluence=1, SL 1.5%, R/R 3.0, adaptive relaxation after 3 dry cycles to reach 1% daily
+stop_loss_pct: 1.0
+min_smc_confluence: 0
+notes: v08 max kars minimal risk
