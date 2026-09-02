@@ -137,7 +137,11 @@ def evaluate_entry(
         raise ValueError("Full entry analysis requires at least 20 closed candles")
     entry = strategy["entry"]
     if entry.get("direction") != "long":
-        raise ValueError("Spot worker supports long direction only")
+        # Graceful: skip this asset instead of crashing the whole cycle
+        return {
+            "enter": False,
+            "signals": {"direction_error": "not_long"},
+        }
     # Indicator check removed: strategy now supports any indicator via entry.indicator,
     # but for this worker we only require SMC + price action + trend filters.
     # RSI is no longer a mandatory signal.
@@ -510,7 +514,7 @@ async def run_watchlist_cycle(
         raise ValueError("context_fetchers must contain onchain, news and macro")
 
     semaphore = asyncio.Semaphore(
-        max(1, int(os.getenv("HERMES_MAX_PARALLEL_PRICE_FETCHES", "8")))
+        max(1, int(os.getenv("HERMES_MAX_PARALLEL_PRICE_FETCHES", "32")))
     )
 
     async def fetch_price_multi(asset: str) -> Mapping[str, Any]:
