@@ -1,4 +1,4 @@
-version: '08_final'
+version: '08'
 entry:
   indicator: none
   threshold: 0
