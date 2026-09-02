@@ -1,0 +1,29 @@
+version: '08'
+entry:
+  indicator: none
+  threshold: 0
+  direction: long
+stop_loss_pct: 1.0
+position_size_r: 1.0
+risk_reward: 2.0
+market_type: spot
+signals:
+  smart_money_concepts: true
+  price_action: true
+  smc_profile: institutional_full
+  require_full_smc_setup: false
+  require_bullish_price_action: false
+  btc_master_gate: false
+  btc_gate_pullback_tolerance: false
+  min_smc_confluence: 0
+  components:
+    confirmed_swing_structure: false
+    bos_choch: true
+    sell_side_liquidity_sweep: false
+    order_block_mitigation: false
+    fair_value_gap_mitigation: false
+    premium_discount_dealing_range: false
+    multi_timeframe_bias_1h_4h_1d: true
+  adaptive_relaxation:
+    enabled: false
+notes: v08_final -- max kars / min risk. BTC gate OFF, SL 1% (dar), R/R 2.0. Only BOS/CHOCH + multi-TF bias required. Daily target 1% via 10x 0.1% or 20x 0.05%.
