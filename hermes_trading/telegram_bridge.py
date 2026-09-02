@@ -173,7 +173,7 @@ async def poll_loop() -> None:
                     flush=True,
                 )
                 reply = handle_command(text)
-                send_telegram(chat_id, reply)
+                await asyncio.to_thread(send_telegram, chat_id, reply)
         except Exception as exc:
             print(
                 json.dumps({"event": "telegram_poll_error", "error": str(exc), "backoff": backoff}),
