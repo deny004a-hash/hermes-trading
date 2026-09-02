@@ -1,4 +1,4 @@
-version: 09
+version: '10'
 note: Top 50 USDT by 24h volume (rate limit safe)
 assets:
 - USDC/USDT
