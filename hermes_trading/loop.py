@@ -856,6 +856,7 @@ async def run_loop(
 
     async def trading_loop() -> None:
         """Watchlist trading scan every interval_seconds."""
+        print(json.dumps({"event": "trading_loop_start", "interval_seconds": interval_seconds}), flush=True)
         breaker = CircuitBreaker(threshold=5)
         while True:
             started = asyncio.get_running_loop().time()
@@ -872,7 +873,7 @@ async def run_loop(
                 print(json.dumps({"event": "fatal", "error_type": type(exc).__name__, "error": str(exc)}), flush=True)
                 raise
             except Exception as exc:
-                print(json.dumps({"event": "cycle_error", "error_type": type(exc).__name__, "error": str(exc)}), flush=True)
+                print(json.dumps({"event": "cycle_error", "error_type": type(exc).__name__, "error": str(exc), "traceback": True}), flush=True)
             elapsed = asyncio.get_running_loop().time() - started
             await asyncio.sleep(max(0.0, interval_seconds - elapsed))
 
