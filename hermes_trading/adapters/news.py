@@ -30,7 +30,14 @@ def parse_rss(xml_text: str, query: str) -> dict[str, Any]:
                     }
                 )
         if not headlines:
-            raise SchemaError("RSS payload contained no usable headlines")
+            # Return empty headlines instead of raising - allows trading cycle to continue
+            return {
+                "schema_version": SCHEMA_VERSION,
+                "source": "google_news_rss",
+                "query": query,
+                "headlines": [],
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+            }
         return {
             "schema_version": SCHEMA_VERSION,
             "source": "google_news_rss",
